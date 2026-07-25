@@ -1,58 +1,66 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Fridge to Dinner — API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel API that turns "what's actually in my fridge" into ranked, realistic dinner suggestions — and knows when a missing ingredient has a workable substitute already on your shelf.
 
-## About Laravel
+## What makes this different from a typical recipe-matcher
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Most pantry-matching demos do a flat "ingredients you have ∩ ingredients the recipe needs" check. This one goes a step further: ingredients are modeled as a graph, connected by substitution edges with a confidence weight (butter → margarine is a strong substitute; white wine → chicken stock, weaker). When a recipe is missing something, a depth-limited BFS checks whether a usable substitute is already in your pantry — so a recipe calling for buttermilk doesn't get unfairly ranked below one you're equally equipped to cook, just because you have milk and a splash of lemon juice instead.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Laravel 11, PHP 8.3
+- MySQL
+- Laravel Sanctum (token auth — built this way from day one so the same API can back a mobile client later without an auth rewrite)
+- PHPUnit feature tests, run in CI on every push
 
-## Learning Laravel
+## Core features
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Pantry tracking** — add ingredients by free-text name; resolved against a canonical ingredient list plus an alias table, so "tomatoes," "cherry tomato," and "roma tomato" all map to one underlying ingredient.
+- **Ranked suggestions** — recipes scored by how much of what they need you actually have, with a boost for recipes that use something close to expiring.
+- **Substitution-aware matching** — a graph of ingredient substitutions with weighted confidence, traversed via BFS, surfaces "you can basically make this" recipes that a naive exact-match system would rank as incomplete.
+- **Recipe detail** — full ingredient list with per-item have/missing/substitutable state.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## API overview
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/register` | Create an account, returns a bearer token |
+| POST | `/api/login` | Authenticate, returns a bearer token |
+| POST | `/api/logout` | Revoke the current token |
+| GET | `/api/pantry` | List the authenticated user's pantry |
+| POST | `/api/pantry` | Add an ingredient to the pantry |
+| DELETE | `/api/pantry/{id}` | Remove a pantry item |
+| GET | `/api/ingredients/search?q=` | Autocomplete search over ingredients + aliases |
+| GET | `/api/ingredients/{id}/substitutes` | List known substitutes for an ingredient |
+| GET | `/api/recipes/suggestions` | Ranked recipe suggestions for the current pantry |
+| GET | `/api/recipes/{id}` | Full recipe detail with have/missing/substitute flags |
 
-## Agentic Development
+All routes except register/login require a `Authorization: Bearer <token>` header.
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Running locally
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env
+php artisan key:generate
+# set DB credentials in .env, then:
+php artisan migrate
+php artisan db:seed --class=RecipeImportSeeder
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Testing
 
-## Contributing
+```bash
+php artisan test
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+CI runs the full suite against a MySQL service container on every push — see `.github/workflows/tests.yml`.
 
-## Code of Conduct
+## Why token auth instead of Sanctum's SPA/cookie mode
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+The frontend is a separate Vue SPA, and the same auth needs to work for a possible future mobile client without a redesign — so every client (web or native) authenticates identically via a bearer token rather than relying on same-origin cookies.
 
-## Security Vulnerabilities
+## Related repo
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The frontend lives at [link to your Vue repo] — a Vue 3 SPA consuming this API.
