@@ -102,6 +102,10 @@ class RecipeController extends Controller
             'prep_minutes' => $recipe->prep_minutes,
             'cook_minutes' => $recipe->cook_minutes,
             'servings' => $recipe->servings,
+            'isFavorite' => $request->user()
+                ->favoriteRecipes()
+                ->where('recipe_id', $recipe->id)
+                ->exists(),
             'ingredients' => $recipe->ingredients->map(function ($ingredient) use ($pantryIngredientIds): array {
                 $hasIngredient = $pantryIngredientIds->contains($ingredient->ingredient_id);
 

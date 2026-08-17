@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\IngredientController;
 use App\Http\Controllers\Api\PantryController;
 use App\Http\Controllers\Api\RecipeController;
+use App\Http\Controllers\Api\FavoriteRecipesController;
 use App\Http\Controllers\Api\ShoppingOpportunityController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,4 +26,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('/recipes/suggestions', [RecipeController::class, 'suggestions']);
     Route::get('/recipes/{recipe}', [RecipeController::class, 'show']);
+
+    Route::post('/recipes/{recipe}/favorite', [FavoriteRecipesController::class, 'favorite']);
+    Route::delete('/recipes/{recipe}/favorite', [FavoriteRecipesController::class, 'unfavorite']);
+    Route::get('/favorites', [FavoriteRecipesController::class, 'index']);
+
 });

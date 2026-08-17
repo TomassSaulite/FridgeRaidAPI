@@ -24,6 +24,14 @@ class User extends Authenticatable
         return $this->hasMany(PantryItem::class);
     }
 
+    public function favoriteRecipes()
+    {
+        return $this->belongsToMany(
+            Recipe::class,
+            'favorite_recipes'
+        );
+    }
+
     /**
      * Get the attributes that should be cast.
      *

@@ -30,4 +30,13 @@ class Recipe extends Model
     {
         return $this->hasMany(RecipeTag::class);
     }
+
+    public function favoritedByUsers()
+    {
+        return $this->belongsToMany(
+            User::class,
+            'favorite_recipes'
+        );
+    }
+
 }
