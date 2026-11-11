@@ -1,4 +1,4 @@
-# Fridge to Dinner — API
+# FridgeRaid API
 
 A Laravel API that turns "what's actually in my fridge" into ranked, realistic dinner suggestions — and knows when a missing ingredient has a workable substitute already on your shelf.
 
@@ -35,7 +35,7 @@ Most pantry-matching demos do a flat "ingredients you have ∩ ingredients the r
 | GET | `/api/recipes/suggestions` | Ranked recipe suggestions for the current pantry |
 | GET | `/api/recipes/{id}` | Full recipe detail with have/missing/substitute flags |
 
-All routes except register/login require a `Authorization: Bearer <token>` header.
+All routes except register/login require an `Authorization: Bearer <token>` header.
 
 ## Running locally
 
@@ -63,4 +63,4 @@ The frontend is a separate Vue SPA, and the same auth needs to work for a possib
 
 ## Related repo
 
-The frontend lives at [link to your Vue repo] — a Vue 3 SPA consuming this API.
+The frontend lives at [FridgeRaid](https://github.com/TomassSaulite/FridgeRaid) — a Vue 3 SPA consuming this API.
