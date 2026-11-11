@@ -10,10 +10,10 @@ Most pantry-matching demos do a flat "ingredients you have ∩ ingredients the r
 
 ## Stack
 
-- Laravel 11, PHP 8.3
+- Laravel 13, PHP 8.3
 - MySQL
 - Laravel Sanctum (token auth — built this way from day one so the same API can back a mobile client later without an auth rewrite)
-- PHPUnit feature tests, run in CI on every push
+- Pest feature tests, run in CI on every push
 
 ## Core features
 
