@@ -1,5 +1,7 @@
 # FridgeRaid API
 
+[![Tests](https://github.com/TomassSaulite/FridgeRaidAPI/actions/workflows/tests.yml/badge.svg)](https://github.com/TomassSaulite/FridgeRaidAPI/actions/workflows/tests.yml)
+
 A Laravel API that turns "what's actually in my fridge" into ranked, realistic dinner suggestions — and knows when a missing ingredient has a workable substitute already on your shelf.
 
 ## What makes this different from a typical recipe-matcher
