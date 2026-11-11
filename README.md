@@ -39,6 +39,10 @@ Most pantry-matching demos do a flat "ingredients you have ∩ ingredients the r
 
 All routes except register/login require an `Authorization: Bearer <token>` header.
 
+## OpenAPI reference
+
+The machine-readable API contract is in [`docs/openapi.yaml`](docs/openapi.yaml). It documents bearer authentication, protected resources, validation errors, and rate-limit responses.
+
 ## Running locally
 
 ```bash
