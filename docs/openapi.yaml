@@ -1,0 +1,249 @@
+openapi: 3.1.0
+info:
+  title: FridgeRaid API
+  version: 1.0.0
+  description: |
+    Pantry-aware recipe suggestions with weighted ingredient substitutions.
+    Register and login return a Laravel Sanctum bearer token. Protected endpoints
+    require an Authorization header.
+servers:
+  - url: http://localhost:8000/api
+    description: Local Laravel server
+tags:
+  - name: Authentication
+  - name: Pantry
+  - name: Ingredients
+  - name: Recipes
+  - name: Favorites
+paths:
+  /register:
+    post:
+      tags: [Authentication]
+      summary: Register a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User and bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: User and bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+  /logout:
+    post:
+      tags: [Authentication]
+      security: [{ bearerAuth: [] }]
+      summary: Revoke the current token
+      responses:
+        '200':
+          description: Logged out
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /user:
+    get:
+      tags: [Authentication]
+      security: [{ bearerAuth: [] }]
+      summary: Get the authenticated user
+      responses:
+        '200':
+          description: Authenticated user
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /pantry:
+    get:
+      tags: [Pantry]
+      security: [{ bearerAuth: [] }]
+      summary: List pantry items
+      responses:
+        '200':
+          description: Pantry items
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Pantry]
+      security: [{ bearerAuth: [] }]
+      summary: Add an ingredient to the pantry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PantryItemRequest'
+      responses:
+        '201':
+          description: Pantry item created
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /pantry/{id}:
+    delete:
+      tags: [Pantry]
+      security: [{ bearerAuth: [] }]
+      summary: Remove a pantry item
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '204':
+          description: Pantry item removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /ingredients/search:
+    get:
+      tags: [Ingredients]
+      security: [{ bearerAuth: [] }]
+      summary: Search ingredients and aliases
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2 }
+      responses:
+        '200':
+          description: Matching ingredients
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /ingredients/{id}/substitutes:
+    get:
+      tags: [Ingredients]
+      security: [{ bearerAuth: [] }]
+      summary: List known substitutes
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Substitutes with confidence weights
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /recipes/suggestions:
+    get:
+      tags: [Recipes]
+      security: [{ bearerAuth: [] }]
+      summary: Rank recipes for the current pantry
+      responses:
+        '200':
+          description: Ranked recipe suggestions
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /recipes/{id}:
+    get:
+      tags: [Recipes]
+      security: [{ bearerAuth: [] }]
+      summary: Get recipe detail
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Recipe with ingredient availability
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /favorites:
+    get:
+      tags: [Favorites]
+      security: [{ bearerAuth: [] }]
+      summary: List favorite recipes
+      responses:
+        '200':
+          description: Favorite recipes
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+  responses:
+    Unauthorized:
+      description: Missing or invalid bearer token
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+    RateLimited:
+      description: Too many requests
+    NotFound:
+      description: Resource not found
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [name, email, password, password_confirmation]
+      properties:
+        name: { type: string, maxLength: 255 }
+        email: { type: string, format: email }
+        password: { type: string, format: password, minLength: 8 }
+        password_confirmation: { type: string, format: password }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    PantryItemRequest:
+      type: object
+      required: [ingredient]
+      properties:
+        ingredient: { type: string, minLength: 1 }
+        quantity: { type: number, minimum: 0 }
+        expires_at: { type: string, format: date, nullable: true }
+    AuthResponse:
+      type: object
+      required: [token, token_type, user]
+      properties:
+        token: { type: string }
+        token_type: { type: string, example: Bearer }
+        user: { type: object }
+    ValidationError:
+      type: object
+      properties:
+        message: { type: string }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
